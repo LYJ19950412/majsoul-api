@@ -651,6 +651,7 @@ func main() {
 					log.Println("EnterGame", respEnterGame, err)
 					log.Println("进入对局...")
 				case "NotifyGameEndResult": // 对局结束
+					time.Sleep(5 * time.Second)
 					// 进行匹配
 					if !NextPipei {
 						log.Println("取消下次匹配操作")
