@@ -451,15 +451,22 @@ func main() {
 		Password = "密码"
 		_        = "Token"
 		URL      = "majserver.sykj.site"
+		SendKey  = ""
 	)
 
 	log.Println("请输入雀魂账号:")
 	fmt.Scanln(&Account)
 	log.Println("请输入雀魂密码:")
 	fmt.Scanln(&Password)
+	log.Println("请输入ServerChan SendKey:")
+	log.Println("什么是ServerChan? 使用该服务可以方便服务端发送例如断线、无法连接服务器等通知")
+	log.Println("强烈建议使用该服务, 配置地址: https://sct.ftqq.com/forward")
+	log.Println("注意, 请选择【Turbo】版本, 否则无法发送通知")
+	fmt.Scanln(&SendKey)
 
 	Account = strings.Trim(Account, "\n")
 	Password = strings.Trim(Password, "\n")
+	SendKey = strings.Trim(SendKey, "\n")
 
 	// 从雀魂Ex官方获取Client端证书
 	cert, err := tls.LoadX509KeyPair("./cer/client.pem", "./cer/client.key")
@@ -483,12 +490,12 @@ func main() {
 	lobby := NewLobbyClient(conn)
 	// 账号密码登录
 	// 普通账号密码登录
-	respLogin, err := lobby.Login(context.Background(), &ReqLogin{Account: Account, Password: Password})
+	// respLogin, err := lobby.Login(context.Background(), &ReqLogin{Account: Account, Password: Password})
 	// 账号密码登录, 附加Server Chan通知
 	// Type 0 => 旧版本
 	// Type 1 => Turbo
 	// Server Chan只需要登录时提交一次即可
-	// respLogin, err := lobby.Login(context.Background(), &ReqLogin{Account: Account, Password: Password, ServerChan: &ServerChan{Type: 1, Sendkey: "Server Chan SendKey"}})
+	respLogin, err := lobby.Login(context.Background(), &ReqLogin{Account: Account, Password: Password, ServerChan: &ServerChan{Type: 1, Sendkey: SendKey}})
 	// AccessToken登录
 	// respLogin, err := lobby.Oauth2Login(context.Background(), &ReqOauth2Login{AccessToken: AccessToken})
 	if err != nil {
@@ -585,6 +592,10 @@ func main() {
 				}
 
 				switch wrapper.GetName() {
+				case "Error":
+					msg := &Error{}
+					err = proto.Unmarshal(wrapper.GetData(), msg)
+					log.Println("发生致命错误", err, msg)
 				case "NotifyRoomGameStart":
 					msg := &NotifyRoomGameStart{}
 					err = proto.Unmarshal(wrapper.GetData(), msg)
