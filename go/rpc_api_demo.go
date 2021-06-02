@@ -485,7 +485,7 @@ func main() {
 
 	conn, err := grpc.Dial(URL+":20009", grpc.WithTransportCredentials(creds))
 	if err != nil {
-		log.Fatal("[登录失败1]: ", err)
+		log.Panic("[登录失败1]: ", err)
 	}
 	defer conn.Close()
 
@@ -502,7 +502,7 @@ func main() {
 	// AccessToken登录
 	// respLogin, err := lobby.Oauth2Login(context.Background(), &ReqOauth2Login{AccessToken: AccessToken})
 	if err != nil {
-		log.Fatal("[登录失败2]: ", err)
+		log.Panic("[登录失败2]: ", err)
 	}
 
 	PostToHelper(respLogin)
@@ -519,7 +519,7 @@ func main() {
 	// !!! 重要, 不附带AccessToken将无法执行除登录外其他任何操作
 	conn, err = grpc.Dial(URL+":20009", grpc.WithTransportCredentials(creds), grpc.WithPerRPCCredentials(&auth))
 	if err != nil {
-		log.Fatal("[连接失败]: ", err)
+		log.Panic("[连接失败]: ", err)
 	}
 	defer conn.Close()
 	log.Println("二次连接成功")
