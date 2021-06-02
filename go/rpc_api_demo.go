@@ -180,6 +180,7 @@ var (
 	LastHelperResult *[]*MajsoulExAnalysisResult
 	LastDeal         string
 	NextPipei        bool
+	IsGameEnd        bool
 )
 
 var (
@@ -289,8 +290,8 @@ func doOp(op *OptionalOperationList, tile string) {
 	if canRiichi() {
 		removeFromHand([]string{tile})
 		LastDeal = ""
-		log.Println("立直", tile)
-		fast.InputOperation(context.Background(), &ReqSelfOperation{
+		log.Println("执行立直", tile)
+		log.Println(fast.InputOperation(context.Background(), &ReqSelfOperation{
 			Type: E_PlayOperation_RiiChi,
 			Tile: tile,
 			// !!! 真实情况中请根据是否是刚摸来的牌进行判断
@@ -300,7 +301,7 @@ func doOp(op *OptionalOperationList, tile string) {
 			Moqie:     moqie,
 			Timeuse:   timeuse,
 			TileState: 0,
-		})
+		}))
 		return
 	}
 
@@ -309,71 +310,66 @@ func doOp(op *OptionalOperationList, tile string) {
 		// 鸣牌操作时直接取消
 		case E_PlayOperation_Chi, E_PlayOperation_Minkan:
 			// 取消鸣牌操作
-			fast.InputChiPengGang(context.Background(), &ReqChiPengGang{
+			log.Println("取消吃、明杠")
+			log.Println(fast.InputChiPengGang(context.Background(), &ReqChiPengGang{
 				CancelOperation: true,
 				Timeuse:         timeuse,
-			})
-			// fast.InputOperation(context.Background(), &ReqSelfOperation{
-			//   CancelOperation: true,
-			//   Timeuse:         1,
-			// })
+			}))
 		// 碰
 		case E_PlayOperation_Pon:
-			if tile[1:] == "5z" || tile[1:] == "6z" || tile[1:] == "7z" {
-				removeFromHand([]string{tile, tile})
-				fast.InputChiPengGang(context.Background(), &ReqChiPengGang{
-					Type:    E_PlayOperation_Pon,
-					Index:   0,
-					Timeuse: timeuse,
-				})
-			} else {
-				fast.InputChiPengGang(context.Background(), &ReqChiPengGang{
-					CancelOperation: true,
-					Timeuse:         timeuse,
-				})
-			}
+			log.Println("取消碰")
+			log.Println(fast.InputChiPengGang(context.Background(), &ReqChiPengGang{
+				CancelOperation: true,
+				Timeuse:         timeuse,
+			}))
 		// 加杠
 		case E_PlayOperation_Kakan:
 			removeFromHand([]string{tile})
 			LastDeal = ""
-			fast.InputChiPengGang(context.Background(), &ReqChiPengGang{
+			log.Println("加杠")
+			log.Println(fast.InputChiPengGang(context.Background(), &ReqChiPengGang{
 				Type:    E_PlayOperation_Kakan,
 				Index:   0,
 				Timeuse: timeuse,
-			})
+			}))
 		// 暗杠
 		case E_PlayOperation_Ankan:
 			removeFromHand(strings.Split(o.GetCombination()[0], "|"))
 			LastDeal = ""
-			fast.InputOperation(context.Background(), &ReqSelfOperation{
+			log.Println("暗杠")
+			log.Println(fast.InputOperation(context.Background(), &ReqSelfOperation{
 				Type:    E_PlayOperation_Ankan,
 				Index:   0,
 				Timeuse: timeuse,
-			})
+			}))
 		// 荣和
 		case E_PlayOperation_Ron:
-			fast.InputChiPengGang(context.Background(), &ReqChiPengGang{
+			log.Println("和")
+			log.Println(fast.InputChiPengGang(context.Background(), &ReqChiPengGang{
 				Type:  E_PlayOperation_Ron,
 				Index: 0,
-			})
+			}))
 		// 自摸
 		case E_PlayOperation_Tsumo:
-			fast.InputOperation(context.Background(), &ReqSelfOperation{
+			log.Println("自摸")
+			log.Println(fast.InputOperation(context.Background(), &ReqSelfOperation{
 				Type:  E_PlayOperation_Tsumo,
 				Index: 0,
-			})
+			}))
 		// 九种九牌(想什么国土无双呢?)
 		case E_PlayOperation_Kuku:
-			fast.InputOperation(context.Background(), &ReqSelfOperation{
+			log.Println("九种九牌")
+			log.Println(fast.InputOperation(context.Background(), &ReqSelfOperation{
 				Type:    E_PlayOperation_Kuku,
 				Index:   0,
 				Timeuse: timeuse,
-			})
+			}))
 		// 立直
 		case E_PlayOperation_RiiChi:
 			removeFromHand([]string{tile})
 			LastDeal = ""
-			fast.InputOperation(context.Background(), &ReqSelfOperation{
+			log.Println("立直")
+			log.Println(fast.InputOperation(context.Background(), &ReqSelfOperation{
 				Type: E_PlayOperation_RiiChi,
 				Tile: tile,
 				// !!! 真实情况中请根据是否是刚摸来的牌进行判断
@@ -383,7 +379,7 @@ func doOp(op *OptionalOperationList, tile string) {
 				Moqie:     moqie,
 				Timeuse:   timeuse,
 				TileState: 0,
-			})
+			}))
 		// 出牌
 		case E_PlayOperation_Discard:
 			removeFromHand([]string{tile})
@@ -413,12 +409,13 @@ func doOp(op *OptionalOperationList, tile string) {
 		//   })
 		// 换三张
 		case E_PlayOperation_HuanSanZhang:
-			fast.InputOperation(context.Background(), &ReqSelfOperation{
+			log.Println("换三张")
+			log.Println(fast.InputOperation(context.Background(), &ReqSelfOperation{
 				Type:        E_PlayOperation_HuanSanZhang,
 				ChangeTiles: o.GetChangeTiles(),
 				TileStates:  o.GetChangeTileStates(),
 				Timeuse:     timeuse,
-			})
+			}))
 		}
 	}
 }
@@ -597,6 +594,7 @@ func main() {
 					err = proto.Unmarshal(wrapper.GetData(), msg)
 					log.Println("发生致命错误", err, msg)
 				case "NotifyRoomGameStart":
+					IsGameEnd = false
 					msg := &NotifyRoomGameStart{}
 					err = proto.Unmarshal(wrapper.GetData(), msg)
 					if err != nil {
@@ -626,6 +624,7 @@ func main() {
 					log.Println("EnterGame", respEnterGame, err)
 					log.Println("进入对局...")
 				case "NotifyMatchGameStart":
+					IsGameEnd = false
 					msg := &NotifyMatchGameStart{}
 					err = proto.Unmarshal(wrapper.GetData(), msg)
 					if err != nil {
@@ -651,6 +650,7 @@ func main() {
 					log.Println("EnterGame", respEnterGame, err)
 					log.Println("进入对局...")
 				case "NotifyGameEndResult": // 对局结束
+					IsGameEnd = true
 					time.Sleep(5 * time.Second)
 					// 进行匹配
 					if !NextPipei {
@@ -723,11 +723,23 @@ func main() {
 				case "ActionHuleXueZhanEnd":
 					msg := &ActionHuleXueZhanEnd{}
 					err = proto.Unmarshal(wrapper.GetData(), msg)
-					fast.ConfirmNewRound(context.Background(), &ReqCommon{})
+					go func() {
+						time.Sleep(1500 * time.Millisecond)
+						if !IsGameEnd {
+							log.Println("确认下一局")
+							fast.ConfirmNewRound(context.Background(), &ReqCommon{})
+						}
+					}()
 				case "ActionHule":
 					msg := &ActionHule{}
 					err = proto.Unmarshal(wrapper.GetData(), msg)
-					fast.ConfirmNewRound(context.Background(), &ReqCommon{})
+					go func() {
+						time.Sleep(1500 * time.Millisecond)
+						if !IsGameEnd {
+							log.Println("确认下一局")
+							fast.ConfirmNewRound(context.Background(), &ReqCommon{})
+						}
+					}()
 				case "NotifyEndGameVote": // 方便测试, 收到投票结束立即同意投票结束对局
 					log.Println("Vote Game End")
 					log.Println(fast.VoteGameEnd(context.Background(), &ReqVoteGameEnd{Yes: true}))
