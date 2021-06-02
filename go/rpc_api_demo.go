@@ -435,6 +435,12 @@ func (t *Authentication) RequireTransportSecurity() bool {
 }
 
 func main() {
+	defer func() {
+		if t := recover(); t != nil {
+			panic(t)
+		}
+	}()
+
 	log.Println("开发者: 神崎·H·亚里亚")
 	log.Println("QQ群: 991568358")
 	log.Println("Github: https://github.com/moxcomic/no-asura-no")
@@ -745,7 +751,8 @@ func main() {
 					log.Println(fast.VoteGameEnd(context.Background(), &ReqVoteGameEnd{Yes: true}))
 				// and more case ...
 				default:
-					log.Println("未知 Wrapper 数据:", wrapper.GetName(), "data:", wrapper.GetData())
+					continue
+					// log.Println("未知 Wrapper 数据:", wrapper.GetName(), "data:", wrapper.GetData())
 				}
 			}
 		}()
