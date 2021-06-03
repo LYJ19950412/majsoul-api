@@ -599,17 +599,7 @@ func main() {
 					msg := &Error{}
 					err = proto.Unmarshal(wrapper.GetData(), msg)
 					log.Println("发生致命错误", err, msg)
-				case "NotifyRoomGameStart":
-					IsGameEnd = false
-					msg := &NotifyRoomGameStart{}
-					err = proto.Unmarshal(wrapper.GetData(), msg)
-					if err != nil {
-						log.Println("解析 Wrapper.NotifyRoomGameStart 数据错误:", err, "data:", wrapper.GetData())
-						continue
-					}
-					ConnectToken = msg.GetConnectToken()
-					GameUuid = msg.GetGameUuid()
-					log.Println("Notify Wrapper.NotifyRoomGameStart:", msg)
+				case "NotifyGameClientConnect":
 					if ConnectToken == "" || GameUuid == "" {
 						log.Println("未能获取到连接对局服务器信息")
 						continue
@@ -629,6 +619,18 @@ func main() {
 					PostToHelper(respEnterGame)
 					log.Println("EnterGame", respEnterGame, err)
 					log.Println("进入对局...")
+				case "NotifyRoomGameStart":
+					IsGameEnd = false
+					msg := &NotifyRoomGameStart{}
+					err = proto.Unmarshal(wrapper.GetData(), msg)
+					if err != nil {
+						log.Println("解析 Wrapper.NotifyRoomGameStart 数据错误:", err, "data:", wrapper.GetData())
+						continue
+					}
+					ConnectToken = msg.GetConnectToken()
+					GameUuid = msg.GetGameUuid()
+					log.Println("Notify Wrapper.NotifyRoomGameStart:", msg)
+
 				case "NotifyMatchGameStart":
 					IsGameEnd = false
 					msg := &NotifyMatchGameStart{}
@@ -640,21 +642,7 @@ func main() {
 					ConnectToken = msg.GetConnectToken()
 					GameUuid = msg.GetGameUuid()
 					log.Println("Notify Wrapper.NotifyRoomGameStart:", msg)
-					// time.Sleep(time.Second)
-					// 验证对局信息
-					respAuthGame, err := fast.AuthGame(context.Background(), &ReqAuthGame{
-						AccountId: respLogin.GetAccountId(),
-						Token:     ConnectToken,
-						GameUuid:  GameUuid,
-					})
-					PostToHelper(respAuthGame)
-					log.Println("AuthGame", respLogin.GetAccountId(), ConnectToken, GameUuid, respAuthGame, err)
-					// time.Sleep(time.Second)
-					// 进入对局
-					respEnterGame, err := fast.EnterGame(context.Background(), &ReqCommon{})
-					PostToHelper(respEnterGame)
-					log.Println("EnterGame", respEnterGame, err)
-					log.Println("进入对局...")
+
 				case "NotifyGameEndResult": // 对局结束
 					IsGameEnd = true
 					time.Sleep(5 * time.Second)
@@ -725,7 +713,13 @@ func main() {
 				case "ActionNoTile":
 					msg := &ActionNoTile{}
 					err = proto.Unmarshal(wrapper.GetData(), msg)
-					fast.ConfirmNewRound(context.Background(), &ReqCommon{})
+					go func() {
+						time.Sleep(1500 * time.Millisecond)
+						if !IsGameEnd {
+							log.Println("确认下一局")
+							fast.ConfirmNewRound(context.Background(), &ReqCommon{})
+						}
+					}()
 				case "ActionHuleXueZhanEnd":
 					msg := &ActionHuleXueZhanEnd{}
 					err = proto.Unmarshal(wrapper.GetData(), msg)
@@ -748,7 +742,7 @@ func main() {
 					}()
 				case "NotifyEndGameVote": // 方便测试, 收到投票结束立即同意投票结束对局
 					log.Println("Vote Game End")
-					log.Println(fast.VoteGameEnd(context.Background(), &ReqVoteGameEnd{Yes: true}))
+					go log.Println(fast.VoteGameEnd(context.Background(), &ReqVoteGameEnd{Yes: true}))
 				// and more case ...
 				default:
 					continue
