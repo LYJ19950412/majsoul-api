@@ -278,16 +278,14 @@ func doOp(op *OptionalOperationList, tile string) {
 		LastHelperResult = nil
 	}
 
-	canRiichi := func() bool {
+	if func() bool {
 		for _, o := range op.GetOperationList() {
 			if o.GetType() == E_PlayOperation_RiiChi {
 				return true
 			}
 		}
 		return false
-	}
-
-	if canRiichi() {
+	}() {
 		removeFromHand([]string{tile})
 		LastDeal = ""
 		log.Println("执行立直", tile)
@@ -303,6 +301,26 @@ func doOp(op *OptionalOperationList, tile string) {
 			TileState: 0,
 		}))
 		return
+	}
+
+	var ao *OptionalOperation
+	if func() bool {
+		for _, o := range op.GetOperationList() {
+			if o.GetType() == E_PlayOperation_Ankan {
+				ao = o
+				return true
+			}
+		}
+		return false
+	}() {
+		removeFromHand(strings.Split(ao.GetCombination()[0], "|"))
+		LastDeal = ""
+		log.Println("暗杠")
+		log.Println(fast.InputChiPengGang(context.Background(), &ReqChiPengGang{
+			Type:    E_PlayOperation_Ankan,
+			Index:   0,
+			Timeuse: timeuse,
+		}))
 	}
 
 	for _, o := range op.GetOperationList() {
@@ -337,7 +355,7 @@ func doOp(op *OptionalOperationList, tile string) {
 			removeFromHand(strings.Split(o.GetCombination()[0], "|"))
 			LastDeal = ""
 			log.Println("暗杠")
-			log.Println(fast.InputOperation(context.Background(), &ReqSelfOperation{
+			log.Println(fast.InputChiPengGang(context.Background(), &ReqChiPengGang{
 				Type:    E_PlayOperation_Ankan,
 				Index:   0,
 				Timeuse: timeuse,
@@ -352,14 +370,14 @@ func doOp(op *OptionalOperationList, tile string) {
 		// 自摸
 		case E_PlayOperation_Tsumo:
 			log.Println("自摸")
-			log.Println(fast.InputOperation(context.Background(), &ReqSelfOperation{
+			log.Println(fast.InputChiPengGang(context.Background(), &ReqChiPengGang{
 				Type:  E_PlayOperation_Tsumo,
 				Index: 0,
 			}))
 		// 九种九牌(想什么国土无双呢?)
 		case E_PlayOperation_Kuku:
 			log.Println("九种九牌")
-			log.Println(fast.InputOperation(context.Background(), &ReqSelfOperation{
+			log.Println(fast.InputChiPengGang(context.Background(), &ReqChiPengGang{
 				Type:    E_PlayOperation_Kuku,
 				Index:   0,
 				Timeuse: timeuse,
@@ -384,6 +402,7 @@ func doOp(op *OptionalOperationList, tile string) {
 		case E_PlayOperation_Discard:
 			removeFromHand([]string{tile})
 			LastDeal = ""
+			log.Println("当前手牌:", Tiles)
 			respDiscard, err := fast.InputOperation(context.Background(), &ReqSelfOperation{
 				Type: E_PlayOperation_Discard,
 				Tile: tile,
