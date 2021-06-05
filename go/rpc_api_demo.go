@@ -321,6 +321,7 @@ func doOp(op *OptionalOperationList, tile string) {
 			Index:   0,
 			Timeuse: timeuse,
 		}))
+		return
 	}
 
 	for _, o := range op.GetOperationList() {
