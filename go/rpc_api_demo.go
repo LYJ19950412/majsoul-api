@@ -24,6 +24,65 @@ import (
 	"google.golang.org/protobuf/reflect/protoregistry"
 )
 
+var (
+	// 匹配模式
+	MatchMode = map[int]map[string]interface{}{
+		2: {"Name": "铜之间", "PlayerCount": 4, "Mode": "东场"},
+		3: {"Name": "铜之间", "PlayerCount": 4, "Mode": "半庄"},
+
+		5: {"Name": "银之间", "PlayerCount": 4, "Mode": "东风"},
+		6: {"Name": "银之间", "PlayerCount": 4, "Mode": "半庄"},
+
+		8: {"Name": "金之间", "PlayerCount": 4, "Mode": "东风"},
+		9: {"Name": "金之间", "PlayerCount": 4, "Mode": "半庄"},
+
+		11: {"Name": "玉之间", "PlayerCount": 4, "Mode": "东风"},
+		12: {"Name": "铜之间", "PlayerCount": 4, "Mode": "半庄"},
+
+		13: {"Name": "乱斗之间", "PlayerCount": 4, "Mode": "东风"},
+		14: {"Name": "乱斗之间", "PlayerCount": 4, "Mode": "半庄"},
+
+		15: {"Name": "王座之间", "PlayerCount": 4, "Mode": "东风"},
+		16: {"Name": "铜之间", "PlayerCount": 4, "Mode": "半庄"},
+
+		17: {"Name": "铜之间", "PlayerCount": 3, "Mode": "东风"},
+		18: {"Name": "铜之间", "PlayerCount": 3, "Mode": "半庄"},
+
+		19: {"Name": "银之间", "PlayerCount": 3, "Mode": "东风"},
+		20: {"Name": "银之间", "PlayerCount": 3, "Mode": "半庄"},
+
+		21: {"Name": "金之间", "PlayerCount": 3, "Mode": "东风"},
+		22: {"Name": "金之间", "PlayerCount": 3, "Mode": "半庄"},
+
+		23: {"Name": "玉之间", "PlayerCount": 3, "Mode": "东风"},
+		24: {"Name": "玉之间", "PlayerCount": 3, "Mode": "半庄"},
+
+		25: {"Name": "王座之间", "PlayerCount": 3, "Mode": "东风"},
+		26: {"Name": "银之间", "PlayerCount": 3, "Mode": "半庄"},
+
+		29: {"Name": "休闲普通场", "PlayerCount": 4, "Mode": "东风"},
+		30: {"Name": "休闲普通场", "PlayerCount": 4, "Mode": "半庄"},
+		31: {"Name": "休闲普通场", "PlayerCount": 3, "Mode": "东风"},
+		32: {"Name": "休闲普通场", "PlayerCount": 3, "Mode": "半庄"},
+
+		33: {"Name": "宝牌狂热", "PlayerCount": 4, "Mode": "东风"},
+
+		34: {"Name": "配牌明牌", "PlayerCount": 4, "Mode": "半庄"},
+
+		35: {"Name": "龙之目玉", "PlayerCount": 4, "Mode": "半庄"},
+
+		36: {"Name": "试炼之道", "PlayerCount": 4, "Mode": "东风"},
+
+		37: {"Name": "龙争虎斗", "PlayerCount": 3, "Mode": "半庄"},
+		38: {"Name": "龙争虎斗", "PlayerCount": 3, "Mode": "半庄"},
+		39: {"Name": "龙争虎斗", "PlayerCount": 3, "Mode": "半庄"},
+
+		40: {"Name": "修罗之战", "PlayerCount": 4, "Mode": "东风"},
+
+		41: {"Name": "赤羽之战", "PlayerCount": 4, "Mode": "东风"},
+	}
+)
+
 // 操作枚举
 const (
 	E_PlayOperation_None         = iota
