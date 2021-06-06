@@ -37,13 +37,13 @@ var (
 		9: {"Name": "金之间", "PlayerCount": 4, "Mode": "半庄"},
 
 		11: {"Name": "玉之间", "PlayerCount": 4, "Mode": "东风"},
-		12: {"Name": "铜之间", "PlayerCount": 4, "Mode": "半庄"},
+		12: {"Name": "玉之间", "PlayerCount": 4, "Mode": "半庄"},
 
 		13: {"Name": "乱斗之间", "PlayerCount": 4, "Mode": "东风"},
 		14: {"Name": "乱斗之间", "PlayerCount": 4, "Mode": "半庄"},
 
 		15: {"Name": "王座之间", "PlayerCount": 4, "Mode": "东风"},
-		16: {"Name": "铜之间", "PlayerCount": 4, "Mode": "半庄"},
+		16: {"Name": "王座之间", "PlayerCount": 4, "Mode": "半庄"},
 
 		17: {"Name": "铜之间", "PlayerCount": 3, "Mode": "东风"},
 		18: {"Name": "铜之间", "PlayerCount": 3, "Mode": "半庄"},
@@ -58,7 +58,7 @@ var (
 		24: {"Name": "玉之间", "PlayerCount": 3, "Mode": "半庄"},
 
 		25: {"Name": "王座之间", "PlayerCount": 3, "Mode": "东风"},
-		26: {"Name": "银之间", "PlayerCount": 3, "Mode": "半庄"},
+		26: {"Name": "王座之间", "PlayerCount": 3, "Mode": "半庄"},
 
 		29: {"Name": "休闲普通场", "PlayerCount": 4, "Mode": "东风"},
 		30: {"Name": "休闲普通场", "PlayerCount": 4, "Mode": "半庄"},
