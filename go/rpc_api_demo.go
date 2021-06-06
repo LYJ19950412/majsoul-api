@@ -27,7 +27,7 @@ import (
 var (
 	// 匹配模式
 	MatchMode = map[int]map[string]interface{}{
-		2: {"Name": "铜之间", "PlayerCount": 4, "Mode": "东场"},
+		2: {"Name": "铜之间", "PlayerCount": 4, "Mode": "东风"},
 		3: {"Name": "铜之间", "PlayerCount": 4, "Mode": "半庄"},
 
 		5: {"Name": "银之间", "PlayerCount": 4, "Mode": "东风"},
