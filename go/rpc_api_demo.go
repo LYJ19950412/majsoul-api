@@ -280,6 +280,38 @@ func doOp(op *OptionalOperationList, tile string) {
 
 	if func() bool {
 		for _, o := range op.GetOperationList() {
+			if o.GetType() == E_PlayOperation_Tsumo {
+				return true
+			}
+		}
+		return false
+	}() {
+		log.Println("自摸")
+		log.Println(fast.InputChiPengGang(context.Background(), &ReqChiPengGang{
+			Type:  E_PlayOperation_Tsumo,
+			Index: 0,
+		}))
+		return
+	}
+
+	if func() bool {
+		for _, o := range op.GetOperationList() {
+			if o.GetType() == E_PlayOperation_Ron {
+				return true
+			}
+		}
+		return false
+	}() {
+		log.Println("和")
+		log.Println(fast.InputChiPengGang(context.Background(), &ReqChiPengGang{
+			Type:  E_PlayOperation_Ron,
+			Index: 0,
+		}))
+		return
+	}
+
+	if func() bool {
+		for _, o := range op.GetOperationList() {
 			if o.GetType() == E_PlayOperation_RiiChi {
 				return true
 			}
