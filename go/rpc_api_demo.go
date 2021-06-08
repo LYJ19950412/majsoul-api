@@ -26,7 +26,7 @@ import (
 
 var (
 	// 匹配模式
-	MatchMode = map[int]map[string]interface{}{
+	MatchMode = map[uint32]map[string]interface{}{
 		2: {"Name": "铜之间", "PlayerCount": 4, "Mode": "东风"},
 		3: {"Name": "铜之间", "PlayerCount": 4, "Mode": "半庄"},
 
@@ -394,6 +394,26 @@ func doOp(op *OptionalOperationList, tile string) {
 		return
 	}
 
+	if func() bool {
+		for _, o := range op.GetOperationList() {
+			if o.GetType() == E_PlayOperation_Kita {
+				return true
+			}
+		}
+		return false
+	}() {
+		fast.InputOperation(context.Background(), &ReqSelfOperation{
+			Type: E_PlayOperation_Kita,
+			// !!! 真实情况中请根据是否是刚摸来的牌进行判断
+			// !!! 如果是刚摸来的牌直接打出去则Moqie为true
+			// !!! 请勿随便传, 否则会无法出牌
+			// !!! 这里因为是Demo所以直接把摸来的牌摸切出去了
+			Moqie:   LastDeal == "4z",
+			Timeuse: timeuse,
+		})
+		return
+	}
+
 	var ao *OptionalOperation
 	if func() bool {
 		for _, o := range op.GetOperationList() {
@@ -561,11 +581,12 @@ func main() {
 	go StartWebSocketServer()
 
 	var (
-		Account  = "账号"
-		Password = "密码"
-		_        = "Token"
-		URL      = "majserver.sykj.site"
-		SendKey  = ""
+		Account     = "账号"
+		Password    = "密码"
+		_           = "Token"
+		URL         = "majserver.sykj.site"
+		SendKey     = ""
+		MatchModeID = uint32(40)
 	)
 
 	log.Println("请输入雀魂账号:")
@@ -763,7 +784,7 @@ func main() {
 						continue
 					}
 					respMatchGame, err := lobby.MatchGame(context.Background(), &ReqJoinMatchQueue{
-						MatchMode: 40, // !!! 40 修罗之战 | 不知道请勿瞎填
+						MatchMode: MatchModeID, // !!! 40 修罗之战 | 不知道请勿瞎填
 					})
 					log.Println("MatchGame", respMatchGame, err)
 				case "ActionNewRound":
@@ -895,9 +916,19 @@ func main() {
 			continue
 		}
 		if strings.Contains(line, "pipei") {
+			for i, e := range MatchMode {
+				log.Println(i, e["Name"], e["PlayerCount"], "人", e["Mode"])
+			}
+			log.Println("请输入匹配模式编号(默认40修罗之战):")
+			fmt.Scanln(&MatchModeID)
+			log.Println("输入了", MatchModeID)
+			if MatchMode[MatchModeID] == nil {
+				log.Panic("您输入的模式不在游戏模式内")
+			}
+
 			NextPipei = true
 			log.Println(lobby.MatchGame(context.Background(), &ReqJoinMatchQueue{
-				MatchMode: 40, // !!! 40 修罗之战 | 不知道请勿瞎填
+				MatchMode: MatchModeID, // !!! 40 修罗之战 | 不知道请勿瞎填
 			}))
 		}
 		if strings.Contains(line, "cancel") {

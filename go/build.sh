@@ -8,3 +8,6 @@ CGO_ENABLED=0 GOOS=linux GOARCH=arm64 go build -x -v -ldflags "-s -w" -a -o majs
 CGO_ENABLED=0 GOOS=linux GOARCH=arm go build -x -v -ldflags "-s -w" -a -o majsoulex_asura_linux_arm && upx -9 majsoulex_asura_linux_arm
 
 CGO_ENABLED=0 GOOS=windows GOARCH=arm go build -x -v -ldflags "-s -w" -a -o majsoulex_asura_windows_arm
+
+CGO_ENABLED=0 GOOS=linux GOARCH=arm64 go build -x -v -ldflags "-s -w" -a -o majsoulex_asura_linux_arm64_android
+CGO_ENABLED=0 GOOS=linux GOARCH=386 go build -x -v -ldflags "-s -w" -a -o majsoulex_asura_linux_ios
