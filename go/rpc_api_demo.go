@@ -323,7 +323,7 @@ func PostToHelper(t interface{}) {
 }
 
 func doOp(op *OptionalOperationList, tile string) {
-	time.Sleep(2 * time.Second)
+	time.Sleep(1500 * time.Millisecond)
 
 	var (
 		timeuse = uint32(2)
@@ -584,10 +584,19 @@ func main() {
 		Account     = "账号"
 		Password    = "密码"
 		_           = "Token"
-		URL         = "majserver.sykj.site"
+		URL         = "gateway.sykj.site"
 		SendKey     = ""
 		MatchModeID = uint32(40)
 	)
+
+	log.Println("[线路一] 输入0")
+	log.Println("[线路二] 输入1")
+	log.Println("请选择线路:")
+	gateway := 0
+	fmt.Scanln(&gateway)
+	if gateway == 1 {
+		URL = "majserver.sykj.site"
+	}
 
 	log.Println("请输入雀魂账号:")
 	fmt.Scanln(&Account)
