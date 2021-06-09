@@ -589,13 +589,17 @@ func main() {
 		MatchModeID = uint32(40)
 	)
 
-	log.Println("[线路一] 输入0")
-	log.Println("[线路二] 输入1")
+	log.Println("[测试线路] 输入999")
+	log.Println("[线路一] 输入1")
+	log.Println("[线路二] 输入2")
 	log.Println("请选择线路:")
-	gateway := 0
+	gateway := 1
 	fmt.Scanln(&gateway)
-	if gateway == 1 {
+	if gateway == 2 {
 		URL = "majserver.sykj.site"
+	}
+	if gateway == 999 {
+		URL = "localhost"
 	}
 
 	log.Println("请输入雀魂账号:")
@@ -849,6 +853,7 @@ func main() {
 					Tiles = append(Tiles, msg.GetInTiles()...)
 					op := msg.GetOperation()
 					if op != nil {
+						time.Sleep(1500 * time.Millisecond) // 等待换牌结束
 						doOp(op, msg.GetInTiles()[len(msg.GetInTiles())-1])
 					}
 				case "ActionNoTile":
