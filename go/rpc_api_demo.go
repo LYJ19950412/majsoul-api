@@ -17,6 +17,8 @@ import (
 	"time"
 
 	"github.com/golang/protobuf/proto"
+	"github.com/moxcomic/MajsoulExSDK/cfg"
+	"github.com/moxcomic/MajsoulExSDK/serverchan"
 	"golang.org/x/net/websocket"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
@@ -587,6 +589,8 @@ func main() {
 		URL         = "gateway.sykj.site"
 		SendKey     = ""
 		MatchModeID = uint32(40)
+		Seat        = -1
+		ServerChan  *serverchan.ServerChan
 	)
 
 	log.Println("[测试线路] 输入999")
@@ -616,6 +620,13 @@ func main() {
 	Password = strings.Trim(Password, "\n")
 	SendKey = strings.Trim(SendKey, "\n")
 
+	if SendKey != "" {
+		ServerChan = &serverchan.ServerChan{
+			Type:    1,
+			SendKey: SendKey,
+		}
+	}
+
 	// 从雀魂Ex官方获取Client端证书
 	cert, err := tls.LoadX509KeyPair("./cer/client.pem", "./cer/client.key")
 	certPool := x509.NewCertPool()
@@ -638,18 +649,18 @@ func main() {
 	lobby := NewLobbyClient(conn)
 	// 账号密码登录
 	// 普通账号密码登录
-	// respLogin, err := lobby.Login(context.Background(), &ReqLogin{Account: Account, Password: Password})
+	respLogin, err := lobby.Login(context.Background(), &ReqLogin{Account: Account, Password: Password})
 	// 账号密码登录, 附加Server Chan通知
 	// Type 0 => 旧版本
 	// Type 1 => Turbo
 	// Server Chan只需要登录时提交一次即可
-	respLogin, err := lobby.Login(context.Background(), &ReqLogin{Account: Account, Password: Password, ServerChan: &ServerChan{Type: 1, Sendkey: SendKey}})
+	// respLogin, err := lobby.Login(context.Background(), &ReqLogin{Account: Account, Password: Password, ServerChan: &serverchan.ServerChan{Type: 1, Sendkey: SendKey}})
 	// AccessToken登录
 	// respLogin, err := lobby.Oauth2Login(context.Background(), &ReqOauth2Login{AccessToken: AccessToken})
 	if err != nil {
 		log.Panic("[登录失败2]: ", err)
 	}
-
+	ServerChan.SendMessage("Event: 登录", fmt.Sprintf("%s: 登录成功\nAccountID: %d NickName: %s", time.Now().Format("2006/01/02 15:04:05.000"), respLogin.GetAccountId(), respLogin.Account.GetNickname()))
 	PostToHelper(respLogin)
 
 	log.Println("登录成功")
@@ -756,6 +767,12 @@ func main() {
 						Token:     ConnectToken,
 						GameUuid:  GameUuid,
 					})
+					for i, id := range respAuthGame.GetSeatList() {
+						if id == respLogin.GetAccountId() {
+							Seat = i
+							break
+						}
+					}
 					PostToHelper(respAuthGame)
 					log.Println("AuthGame", respLogin.GetAccountId(), ConnectToken, GameUuid, respAuthGame, err)
 					// time.Sleep(time.Second)
@@ -778,18 +795,41 @@ func main() {
 
 				case "NotifyMatchGameStart":
 					IsGameEnd = false
-					msg := &NotifyMatchGameStart{}
-					err = proto.Unmarshal(wrapper.GetData(), msg)
+					n := &NotifyMatchGameStart{}
+					err = proto.Unmarshal(wrapper.GetData(), n)
 					if err != nil {
 						log.Println("解析 Wrapper.NotifyRoomGameStart 数据错误:", err, "data:", wrapper.GetData())
 						continue
 					}
-					ConnectToken = msg.GetConnectToken()
-					GameUuid = msg.GetGameUuid()
-					log.Println("Notify Wrapper.NotifyRoomGameStart:", msg)
+					ConnectToken = n.GetConnectToken()
+					GameUuid = n.GetGameUuid()
+					ServerChan.SendMessage("对局开始", fmt.Sprintf("%s\n对局已开始, 模式: %d",
+						time.Now().Format("2006-01-02 15:04:05"),
+						n.GetMatchModeId()),
+					)
+					log.Println("Notify Wrapper.NotifyRoomGameStart:", n)
 
 				case "NotifyGameEndResult": // 对局结束
 					IsGameEnd = true
+					n := &NotifyGameEndResult{}
+					err = proto.Unmarshal(wrapper.GetData(), n)
+					if err != nil {
+						log.Println("解析 Wrapper.NotifyRoomGameStart 数据错误:", err, "data:", wrapper.GetData())
+						continue
+					}
+					if n.GetResult() != nil && n.GetResult().GetPlayers() != nil && Seat != -1 {
+						for i, p := range n.GetResult().GetPlayers() {
+							if p.GetSeat() == uint32(Seat) {
+								ServerChan.SendMessage("对局结束", fmt.Sprintf("%s\n排名: %d\n点数: %d\n铜币: %d",
+									time.Now().Format("2006-01-02 15:04:05"),
+									i+1,
+									p.GetPartPoint_1(),
+									p.GetGold(),
+								))
+								break
+							}
+						}
+					}
 					time.Sleep(5 * time.Second)
 					// 进行匹配
 					if !NextPipei {
@@ -800,6 +840,33 @@ func main() {
 						MatchMode: MatchModeID, // !!! 40 修罗之战 | 不知道请勿瞎填
 					})
 					log.Println("MatchGame", respMatchGame, err)
+				case "NotifyAccountUpdate":
+					n := &NotifyAccountUpdate{}
+					err = proto.Unmarshal(wrapper.GetData(), n)
+					if err != nil {
+						log.Println("解析 Wrapper.NotifyRoomGameStart 数据错误:", err, "data:", wrapper.GetData())
+						continue
+					}
+					s := make([]string, 0)
+					if n.GetUpdate().GetNumerical() != nil {
+						s = append(s, time.Now().Format("2006-01-02 15:04:05"))
+						for _, t := range n.GetUpdate().GetNumerical() {
+							s = append(s, fmt.Sprintf("%s: %d",
+								cfg.GetNameChs(t.GetId()),
+								t.GetFinal(),
+							))
+						}
+					}
+					if n.GetUpdate().GetBag() != nil && n.GetUpdate().GetBag().GetUpdateItems() != nil {
+						for _, t := range n.GetUpdate().GetBag().GetUpdateItems() {
+							s = append(s, fmt.Sprintf("%s: %d",
+								cfg.GetNameChs(t.GetItemId()),
+								t.GetStack(),
+							))
+						}
+					}
+					ServerChan.SendMessage("账号数据更新", strings.Join(s, "\n"))
+
 				case "ActionNewRound":
 					msg := &ActionNewRound{}
 					err = proto.Unmarshal(wrapper.GetData(), msg)
