@@ -840,6 +840,9 @@ func main() {
 						MatchMode: MatchModeID, // !!! 40 修罗之战 | 不知道请勿瞎填
 					})
 					log.Println("MatchGame", respMatchGame, err)
+					if err != nil {
+						ServerChan.SendMessage("匹配失败", fmt.Sprintf("匹配对局失败请手动进行再次匹配\n错误信息: %v", err))
+					}
 				case "NotifyAccountUpdate":
 					n := &NotifyAccountUpdate{}
 					err = proto.Unmarshal(wrapper.GetData(), n)
@@ -1008,9 +1011,12 @@ func main() {
 			}
 
 			NextPipei = true
-			log.Println(lobby.MatchGame(context.Background(), &ReqJoinMatchQueue{
+			_, err := lobby.MatchGame(context.Background(), &ReqJoinMatchQueue{
 				MatchMode: MatchModeID, // !!! 40 修罗之战 | 不知道请勿瞎填
-			}))
+			})
+			if err != nil {
+				ServerChan.SendMessage("匹配失败", fmt.Sprintf("匹配对局失败请手动进行再次匹配\n错误信息: %v", err))
+			}
 		}
 		if strings.Contains(line, "cancel") {
 			lobby.CancelMatch(context.Background(), &ReqCancelMatchQueue{
