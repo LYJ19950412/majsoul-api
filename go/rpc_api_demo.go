@@ -585,7 +585,7 @@ func main() {
 	log.Println()
 	log.Println("正在启动服务")
 
-	//go StartWebSocketServer()
+	go StartWebSocketServer()
 
 	var (
 		Account     = "账号"
