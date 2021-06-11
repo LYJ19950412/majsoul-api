@@ -591,7 +591,6 @@ func main() {
 		Account     = "账号"
 		Password    = "密码"
 		_           = "Token"
-		URL         = "gateway.sykj.site"
 		SendKey     = ""
 		MatchModeID = uint32(40)
 		Seat        = -1
@@ -685,7 +684,7 @@ func main() {
 		RootCAs:      certPool,
 	})
 
-	conn, err := grpc.Dial(URL+":20009", grpc.WithTransportCredentials(creds))
+	conn, err := grpc.Dial(respServers.Servers[selectIndex].URL, grpc.WithTransportCredentials(creds))
 	if err != nil {
 		log.Panic("[登录失败1]: ", err)
 	}
@@ -719,7 +718,7 @@ func main() {
 
 	// 重连并附带AccessToken进行认证
 	// !!! 重要, 不附带AccessToken将无法执行除登录外其他任何操作
-	conn, err = grpc.Dial(URL+":20009", grpc.WithTransportCredentials(creds), grpc.WithPerRPCCredentials(&auth))
+	conn, err = grpc.Dial(respServers.Servers[selectIndex].URL, grpc.WithTransportCredentials(creds), grpc.WithPerRPCCredentials(&auth))
 	if err != nil {
 		log.Panic("[连接失败]: ", err)
 	}
