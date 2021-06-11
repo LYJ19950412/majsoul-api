@@ -8,10 +8,12 @@ import (
 	"crypto/x509"
 	"encoding/json"
 	"fmt"
+	"io"
 	"io/ioutil"
 	"log"
 	"net/http"
 	"os"
+	"path"
 	"strconv"
 	"strings"
 	"time"
@@ -570,7 +572,10 @@ func (t *Authentication) RequireTransportSecurity() bool {
 func main() {
 	defer func() {
 		if t := recover(); t != nil {
-			panic(t)
+			log.Println("错误:", t)
+			log.Println("按任意键后退出")
+			fmt.Scanln()
+			os.Exit(1)
 		}
 	}()
 
@@ -580,7 +585,7 @@ func main() {
 	log.Println()
 	log.Println("正在启动服务")
 
-	go StartWebSocketServer()
+	//go StartWebSocketServer()
 
 	var (
 		Account     = "账号"
@@ -593,20 +598,61 @@ func main() {
 		ServerChan  *serverchan.ServerChan
 	)
 
-	log.Println("[测试线路] 输入999")
-	log.Println("[线路一] 输入1")
-	log.Println("[线路二] 输入2")
-	log.Println("请选择线路:")
-	gateway := 1
-	fmt.Scanln(&gateway)
-	if gateway == 2 {
-		URL = "majserver.sykj.site"
-	}
-	if gateway == 999 {
-		URL = "localhost"
+	type Servers struct {
+		Servers []struct {
+			Name string `json:"name"`
+			URL  string `json:"url"`
+		} `json:"servers"`
 	}
 
-	log.Println("请输入雀魂账号:")
+	log.Println("正在获取连接线路, 请稍后...")
+	respGateway, err := http.Get("http://gateway.sykj.site:20007/services")
+	if err != nil {
+		log.Panic("获取线路失败1", err)
+	}
+	respGatewayBody, err := ioutil.ReadAll(respGateway.Body)
+	if err != nil {
+		log.Panic("获取线路失败2", err)
+	}
+	respServers := &Servers{}
+	err = json.Unmarshal(respGatewayBody, &respServers)
+	if err != nil {
+		log.Panic("获取线路失败3", err)
+	}
+	if respServers.Servers == nil || len(respServers.Servers) == 0 {
+		log.Panic("获取线路失败4, 网络无法访问或服务器在维护")
+	}
+	for i, e := range respServers.Servers {
+		log.Println(e.Name, "输入", i)
+	}
+	selectIndex := 1
+	fmt.Scanln(&selectIndex)
+
+	log.Println("正在检查证书, 请稍后...")
+	cerPath := fmt.Sprintf("./cer%d", selectIndex)
+	if _, err := os.Stat(cerPath); err != nil {
+		log.Println("正在从服务器下载证书, 请稍后...")
+		os.MkdirAll(cerPath, os.ModePerm)
+		cers := make([]string, 0)
+		cers = append(cers, fmt.Sprintf("http://gateway.sykj.site:20007/cer/cer%d/ca.crt", selectIndex))
+		cers = append(cers, fmt.Sprintf("http://gateway.sykj.site:20007/cer/cer%d/client.key", selectIndex))
+		cers = append(cers, fmt.Sprintf("http://gateway.sykj.site:20007/cer/cer%d/client.pem", selectIndex))
+
+		for _, e := range cers {
+			res, err := http.Get(e)
+			if err != nil {
+				log.Panic("下载证书失败", e)
+			}
+			f, err := os.Create(path.Join(cerPath, path.Base(e)))
+			if err != nil {
+				log.Panic("创建证书文件失败", e)
+			}
+			log.Println("正在下载", path.Base(e))
+			io.Copy(f, res.Body)
+		}
+	}
+
+	log.Println("请输入雀魂账号(邮箱账号):")
 	fmt.Scanln(&Account)
 	log.Println("请输入雀魂密码:")
 	fmt.Scanln(&Password)
@@ -628,9 +674,9 @@ func main() {
 	}
 
 	// 从雀魂Ex官方获取Client端证书
-	cert, err := tls.LoadX509KeyPair("./cer/client.pem", "./cer/client.key")
+	cert, err := tls.LoadX509KeyPair(fmt.Sprintf("./cer%d/client.pem", selectIndex), fmt.Sprintf("./cer%d/client.key", selectIndex))
 	certPool := x509.NewCertPool()
-	ca, _ := ioutil.ReadFile("./cer/ca.crt")
+	ca, _ := ioutil.ReadFile(fmt.Sprintf("./cer%d/ca.crt", selectIndex))
 	certPool.AppendCertsFromPEM(ca)
 
 	creds := credentials.NewTLS(&tls.Config{
