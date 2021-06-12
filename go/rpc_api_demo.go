@@ -599,6 +599,7 @@ func main() {
 
 	type Servers struct {
 		Servers []struct {
+			ID   string `json:"id"`
 			Name string `json:"name"`
 			URL  string `json:"url"`
 		} `json:"servers"`
@@ -621,21 +622,51 @@ func main() {
 	if respServers.Servers == nil || len(respServers.Servers) == 0 {
 		log.Panic("获取线路失败4, 网络无法访问或服务器在维护")
 	}
+	if fl, err := os.ReadFile("./gateway.txt"); err == nil {
+		for _, e := range strings.Split(string(fl), "\n") {
+			l := strings.Split(e, "|")
+			if len(l) < 3 {
+				continue
+			}
+			respServers.Servers = append(respServers.Servers, struct {
+				ID   string "json:\"id\""
+				Name string "json:\"name\""
+				URL  string "json:\"url\""
+			}{
+				ID:   l[0],
+				Name: l[1],
+				URL:  l[2],
+			})
+		}
+	}
 	for i, e := range respServers.Servers {
 		log.Println(e.Name, "输入", i)
 	}
-	selectIndex := 1
-	fmt.Scanln(&selectIndex)
+	iii := 1
+	fmt.Scanln(&iii)
+
+	selectID := ""
+	selectLine := ""
+	for i, e := range respServers.Servers {
+		if i == iii {
+			selectID = e.ID
+			selectLine = e.URL
+			break
+		}
+	}
+	if selectID == "" || selectLine == "" {
+		log.Panic("选择线路失败, 无法获取线路信息")
+	}
 
 	log.Println("正在检查证书, 请稍后...")
-	cerPath := fmt.Sprintf("./cer%d", selectIndex)
+	cerPath := fmt.Sprintf("./cer%s", selectID)
 	if _, err := os.Stat(cerPath); err != nil {
 		log.Println("正在从服务器下载证书, 请稍后...")
 		os.MkdirAll(cerPath, os.ModePerm)
 		cers := make([]string, 0)
-		cers = append(cers, fmt.Sprintf("http://gateway.sykj.site:20007/cer/cer%d/ca.crt", selectIndex))
-		cers = append(cers, fmt.Sprintf("http://gateway.sykj.site:20007/cer/cer%d/client.key", selectIndex))
-		cers = append(cers, fmt.Sprintf("http://gateway.sykj.site:20007/cer/cer%d/client.pem", selectIndex))
+		cers = append(cers, fmt.Sprintf("http://gateway.sykj.site:20007/cer/cer%s/ca.crt", selectID))
+		cers = append(cers, fmt.Sprintf("http://gateway.sykj.site:20007/cer/cer%s/client.key", selectID))
+		cers = append(cers, fmt.Sprintf("http://gateway.sykj.site:20007/cer/cer%s/client.pem", selectID))
 
 		for _, e := range cers {
 			res, err := http.Get(e)
@@ -673,9 +704,9 @@ func main() {
 	}
 
 	// 从雀魂Ex官方获取Client端证书
-	cert, err := tls.LoadX509KeyPair(fmt.Sprintf("./cer%d/client.pem", selectIndex), fmt.Sprintf("./cer%d/client.key", selectIndex))
+	cert, err := tls.LoadX509KeyPair(fmt.Sprintf("./cer%s/client.pem", selectID), fmt.Sprintf("./cer%s/client.key", selectID))
 	certPool := x509.NewCertPool()
-	ca, _ := ioutil.ReadFile(fmt.Sprintf("./cer%d/ca.crt", selectIndex))
+	ca, _ := ioutil.ReadFile(fmt.Sprintf("./cer%s/ca.crt", selectID))
 	certPool.AppendCertsFromPEM(ca)
 
 	creds := credentials.NewTLS(&tls.Config{
@@ -684,7 +715,7 @@ func main() {
 		RootCAs:      certPool,
 	})
 
-	conn, err := grpc.Dial(respServers.Servers[selectIndex].URL, grpc.WithTransportCredentials(creds))
+	conn, err := grpc.Dial(selectLine, grpc.WithTransportCredentials(creds))
 	if err != nil {
 		log.Panic("[登录失败1]: ", err)
 	}
@@ -718,7 +749,7 @@ func main() {
 
 	// 重连并附带AccessToken进行认证
 	// !!! 重要, 不附带AccessToken将无法执行除登录外其他任何操作
-	conn, err = grpc.Dial(respServers.Servers[selectIndex].URL, grpc.WithTransportCredentials(creds), grpc.WithPerRPCCredentials(&auth))
+	conn, err = grpc.Dial(selectLine, grpc.WithTransportCredentials(creds), grpc.WithPerRPCCredentials(&auth))
 	if err != nil {
 		log.Panic("[连接失败]: ", err)
 	}
