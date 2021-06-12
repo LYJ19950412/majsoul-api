@@ -915,9 +915,9 @@ func main() {
 					respMatchGame, err := lobby.MatchGame(context.Background(), &ReqJoinMatchQueue{
 						MatchMode: MatchModeID, // !!! 40 修罗之战 | 不知道请勿瞎填
 					})
-					log.Println("MatchGame", respMatchGame, err)
+					log.Println("MatchGame", respMatchGame, err, cfg.GetInfo(respMatchGame.Error.GetCode()))
 					if err != nil {
-						ServerChan.SendMessage("匹配失败", fmt.Sprintf("匹配对局失败请手动进行再次匹配\n错误信息: %v", err))
+						ServerChan.SendMessage("匹配失败", fmt.Sprintf("匹配对局失败请手动进行再次匹配\n错误信息: %v\n%s", err, cfg.GetInfo(respMatchGame.Error.GetCode())))
 					}
 				case "NotifyAccountUpdate":
 					n := &NotifyAccountUpdate{}
@@ -931,7 +931,7 @@ func main() {
 						s = append(s, time.Now().Format("2006-01-02 15:04:05"))
 						for _, t := range n.GetUpdate().GetNumerical() {
 							s = append(s, fmt.Sprintf("%s: %d",
-								cfg.GetNameChs(t.GetId()),
+								cfg.GetItemDefinition(t.GetId()),
 								t.GetFinal(),
 							))
 						}
@@ -939,7 +939,7 @@ func main() {
 					if n.GetUpdate().GetBag() != nil && n.GetUpdate().GetBag().GetUpdateItems() != nil {
 						for _, t := range n.GetUpdate().GetBag().GetUpdateItems() {
 							s = append(s, fmt.Sprintf("%s: %d",
-								cfg.GetNameChs(t.GetItemId()),
+								cfg.GetItemDefinition(t.GetItemId()),
 								t.GetStack(),
 							))
 						}
@@ -1087,16 +1087,17 @@ func main() {
 			}
 
 			NextPipei = true
-			_, err := lobby.MatchGame(context.Background(), &ReqJoinMatchQueue{
+			respMatchGame, err := lobby.MatchGame(context.Background(), &ReqJoinMatchQueue{
 				MatchMode: MatchModeID, // !!! 40 修罗之战 | 不知道请勿瞎填
 			})
+			log.Println("MatchGame", respMatchGame, err, cfg.GetInfo(respMatchGame.Error.GetCode()))
 			if err != nil {
-				ServerChan.SendMessage("匹配失败", fmt.Sprintf("匹配对局失败请手动进行再次匹配\n错误信息: %v", err))
+				ServerChan.SendMessage("匹配失败", fmt.Sprintf("匹配对局失败请手动进行再次匹配\n错误信息: %v\n%s", err, cfg.GetInfo(respMatchGame.Error.GetCode())))
 			}
 		}
 		if strings.Contains(line, "cancel") {
 			lobby.CancelMatch(context.Background(), &ReqCancelMatchQueue{
-				MatchMode: 40,
+				MatchMode: MatchModeID,
 			})
 		}
 		if strings.Contains(line, "vote") {
