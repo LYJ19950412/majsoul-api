@@ -247,6 +247,7 @@ var (
 )
 
 var (
+	lobby LobbyClient
 	fast  FastTestClient
 	Tiles = make([]string, 0)
 )
@@ -292,6 +293,18 @@ func removeFromHand(out []string) {
 }
 
 func StartWebSocketServer() {
+	defer func() {
+		if t := recover(); t != nil {
+			log.Println("错误:", t)
+			log.Println("按任意键后退出")
+			fmt.Scanln()
+			if lobby != nil {
+				log.Println(lobby.SoftLogout(context.Background(), &ReqLogout{}))
+			}
+			os.Exit(1)
+		}
+	}()
+
 	http.Handle("/", websocket.Handler(func(conn *websocket.Conn) {
 		var err error
 		for {
@@ -575,6 +588,9 @@ func main() {
 			log.Println("错误:", t)
 			log.Println("按任意键后退出")
 			fmt.Scanln()
+			if lobby != nil {
+				log.Println(lobby.SoftLogout(context.Background(), &ReqLogout{}))
+			}
 			os.Exit(1)
 		}
 	}()
@@ -722,7 +738,7 @@ func main() {
 	defer conn.Close()
 
 	// 登录获取AccessToken, 后续作为身份验证使用
-	lobby := NewLobbyClient(conn)
+	lobby = NewLobbyClient(conn)
 	// 账号密码登录
 	// 普通账号密码登录
 	respLogin, err := lobby.Login(context.Background(), &ReqLogin{Account: Account, Password: Password})
@@ -915,9 +931,19 @@ func main() {
 					respMatchGame, err := lobby.MatchGame(context.Background(), &ReqJoinMatchQueue{
 						MatchMode: MatchModeID, // !!! 40 修罗之战 | 不知道请勿瞎填
 					})
-					log.Println("MatchGame", respMatchGame, err, cfg.GetInfo(respMatchGame.Error.GetCode()))
+					log.Println("MatchGame", respMatchGame, err, func() string {
+						if respMatchGame == nil || respMatchGame.GetError() == nil {
+							return "<nil>"
+						}
+						return cfg.GetInfo(respMatchGame.Error.GetCode())
+					}())
 					if err != nil {
-						ServerChan.SendMessage("匹配失败", fmt.Sprintf("匹配对局失败请手动进行再次匹配\n错误信息: %v\n%s", err, cfg.GetInfo(respMatchGame.Error.GetCode())))
+						ServerChan.SendMessage("匹配失败", fmt.Sprintf("匹配对局失败请手动进行再次匹配\n错误信息: %v\n%s", err, func() string {
+							if respMatchGame == nil || respMatchGame.GetError() == nil {
+								return "<nil>"
+							}
+							return cfg.GetInfo(respMatchGame.Error.GetCode())
+						}()))
 					}
 				case "NotifyAccountUpdate":
 					n := &NotifyAccountUpdate{}
@@ -1093,9 +1119,19 @@ func main() {
 			respMatchGame, err := lobby.MatchGame(context.Background(), &ReqJoinMatchQueue{
 				MatchMode: MatchModeID, // !!! 40 修罗之战 | 不知道请勿瞎填
 			})
-			log.Println("MatchGame", respMatchGame, err, cfg.GetInfo(respMatchGame.Error.GetCode()))
+			log.Println("MatchGame", respMatchGame, err, func() string {
+				if respMatchGame == nil || respMatchGame.GetError() == nil {
+					return "<nil>"
+				}
+				return cfg.GetInfo(respMatchGame.Error.GetCode())
+			}())
 			if err != nil {
-				ServerChan.SendMessage("匹配失败", fmt.Sprintf("匹配对局失败请手动进行再次匹配\n错误信息: %v\n%s", err, cfg.GetInfo(respMatchGame.Error.GetCode())))
+				ServerChan.SendMessage("匹配失败", fmt.Sprintf("匹配对局失败请手动进行再次匹配\n错误信息: %v\n%s", err, func() string {
+					if respMatchGame == nil || respMatchGame.GetError() == nil {
+						return "<nil>"
+					}
+					return cfg.GetInfo(respMatchGame.Error.GetCode())
+				}()))
 			}
 		}
 		if strings.Contains(line, "cancel") {
