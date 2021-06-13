@@ -803,7 +803,7 @@ func main() {
 				in, err := notifyClient.Recv()
 				if err != nil {
 					log.Println("rec err:", err)
-					continue
+					break
 				}
 				// 收到的是 byte 数据
 				// 解析方法:
@@ -930,16 +930,20 @@ func main() {
 					if n.GetUpdate().GetNumerical() != nil {
 						s = append(s, time.Now().Format("2006-01-02 15:04:05"))
 						for _, t := range n.GetUpdate().GetNumerical() {
-							s = append(s, fmt.Sprintf("%s: %d",
-								cfg.GetItemDefinition(t.GetId()),
+							n, c := cfg.GetItemDefinition(t.GetId())
+							s = append(s, fmt.Sprintf("%s: %d 尘: %d",
+								n,
+								c,
 								t.GetFinal(),
 							))
 						}
 					}
 					if n.GetUpdate().GetBag() != nil && n.GetUpdate().GetBag().GetUpdateItems() != nil {
 						for _, t := range n.GetUpdate().GetBag().GetUpdateItems() {
-							s = append(s, fmt.Sprintf("%s: %d",
-								cfg.GetItemDefinition(t.GetItemId()),
+							n, c := cfg.GetItemDefinition(t.GetItemId())
+							s = append(s, fmt.Sprintf("%s: %d 尘: %d",
+								n,
+								c,
 								t.GetStack(),
 							))
 						}
