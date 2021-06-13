@@ -930,10 +930,9 @@ func main() {
 					if n.GetUpdate().GetNumerical() != nil {
 						s = append(s, time.Now().Format("2006-01-02 15:04:05"))
 						for _, t := range n.GetUpdate().GetNumerical() {
-							n, c := cfg.GetItemDefinition(t.GetId())
-							s = append(s, fmt.Sprintf("%s: %d 尘: %d",
+							n, _ := cfg.GetItemDefinition(t.GetId())
+							s = append(s, fmt.Sprintf("%s: %d",
 								n,
-								c,
 								t.GetFinal(),
 							))
 						}
