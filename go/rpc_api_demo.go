@@ -942,8 +942,8 @@ func main() {
 							n, c := cfg.GetItemDefinition(t.GetItemId())
 							s = append(s, fmt.Sprintf("%s: %d 尘: %d",
 								n,
-								c,
 								t.GetStack(),
+								c,
 							))
 						}
 					}
