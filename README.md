@@ -13,7 +13,7 @@ var (
   Account  = "账号"
   Password = "密码"
   _        = "Token"
-  URL      = "majserver.sykj.site"
+  URL      = "URL"
 )
 
 // 从雀魂Ex官方获取Client端证书
@@ -24,7 +24,7 @@ certPool.AppendCertsFromPEM(ca)
 
 creds := credentials.NewTLS(&tls.Config{
   Certificates: []tls.Certificate{cert},
-  ServerName:   "majserver.sykj.site",
+  ServerName:   "SERVERNAME",
   RootCAs:      certPool,
 })
 
